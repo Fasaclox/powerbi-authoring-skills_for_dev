@@ -1,0 +1,8 @@
+{
+  "name": "my-powerbi-skills",
+  "description": "My own Power BI skills that extend or improve on microsoft/skills-for-fabric's powerbi-authoring plugin.",
+  "version": "0.1.0",
+  "license": "MIT",
+  "keywords": ["powerbi", "pbir", "pbip", "semantic-model", "dax", "report"],
+  "skills": []
+}

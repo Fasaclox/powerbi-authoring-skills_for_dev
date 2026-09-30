@@ -1,0 +1,22 @@
+{
+  "name": "powerbi-skills-lab",
+  "metadata": {
+    "description": "Microsoft's Power BI authoring skills (unmodified upstream copy) plus my own improved skills",
+    "version": "0.1.0"
+  },
+  "owner": {
+    "name": "Zefas"
+  },
+  "plugins": [
+    {
+      "name": "powerbi-authoring",
+      "source": "./upstream/powerbi-authoring",
+      "description": "Upstream: powerbi-report-cli + semantic-model-authoring + powerbi-modeling-mcp, from microsoft/skills-for-fabric (MIT)"
+    },
+    {
+      "name": "my-powerbi-skills",
+      "source": "./plugins/my-powerbi-skills",
+      "description": "My own Power BI skills that extend or improve on the upstream ones"
+    }
+  ]
+}
