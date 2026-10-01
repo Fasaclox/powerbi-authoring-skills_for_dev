@@ -256,7 +256,61 @@ STYLES = [
         body="[[ICON|0|4.5]]" + text("{{_iw+_ig}}", 17.5, 14, 700, "{{$c}}", "{{$v}}")
         + text("{{_iw+_ig+_vw+_lg}}", 17, 12, 400, "#374151", "{{$l}}"),
     ),
+    # ---- Comparison-label variants: the same three layouts with the actual
+    # prior period ("vs Aug 2025", from a label measure) or a short tag (PM/PY).
 ]
+
+
+def _period_variants():
+    """arrow / pill / paren layouts, each with a -period and a -short label."""
+    period = {"dax": 'IF ( NOT ISBLANK ( _Pct ), "vs " & [MoM Prior Label] )',
+              "preview": "vs Aug 2025"}
+    short = "vs PM"
+    layouts = [
+        dict(base="arrow", title="Arrow", icon="block", isz=16, ig=8, vfs=16, lfs=13, lg=16, h=26,
+             source="Example: \u2b06 +8.2%  vs Aug 2025",
+             desc="Block arrow, bold percentage and the comparison period in dark grey.",
+             w="_iw+_ig+_vw+_lg+_lw",
+             body="[[ICON|0|5]]" + text("{{_iw+_ig}}", 19, 16, 700, "{{$c}}", "{{$v}}")
+             + text("{{_iw+_ig+_vw+_lg}}", 18.5, 13, 400, "#334155", "{{$l}}")),
+        dict(base="pill", title="Pill", icon="triangle", isz=13, ig=8, vfs=15, lfs=12, lg=9, h=30,
+             source="Example: pill \u25b2 +8.2% vs Aug 2025",
+             desc="Soft pill with triangle, bold percentage and the comparison period.",
+             w="13+_iw+_ig+_vw+_lg+_lw+13",
+             body="<rect width='{{_W}}' height='30' rx='10' fill='{{$bg}}'/>[[ICON|13|8]]"
+             + text("{{13+_iw+_ig}}", 20.5, 15, 700, "{{$c}}", "{{$v}}")
+             + text("{{13+_iw+_ig+_vw+_lg}}", 20, 12, 400, "#334155", "{{$l}}")),
+        dict(base="paren", title="Brackets", icon="triangle", isz=14, ig=8, vfs=15, lfs=13, lg=8, h=26,
+             source="Example: \u25b2 +8.2% (vs Aug 2025)",
+             desc="Triangle, bold percentage and the comparison period in brackets.",
+             w="_iw+_ig+_vw+_lg+_lw",
+             body="[[ICON|0|5]]" + text("{{_iw+_ig}}", 18.5, 15, 700, "{{$c}}", "{{$v}}")
+             + text("{{_iw+_ig+_vw+_lg}}", 18, 13, 400, "#334155", "{{$l}}")),
+    ]
+    out = []
+    for lay in layouts:
+        paren = lay["base"] == "paren"
+        for kind in ("period", "short"):
+            st = {k: v for k, v in lay.items() if k != "base"}
+            st["name"] = f"{lay['base']}-{kind}"
+            if kind == "period":
+                st["title"] = lay["title"] + ", prior period named"
+                st["label"] = {
+                    "dax": ('IF ( NOT ISBLANK ( _Pct ), "(vs " & [MoM Prior Label] & ")" )'
+                            if paren else period["dax"]),
+                    "preview": f"({period['preview']})" if paren else period["preview"],
+                }
+                st["desc"] = lay["desc"].replace("the comparison period", "the actual prior period (vs Aug 2025)")
+            else:
+                st["title"] = lay["title"] + ", short tag"
+                st["label"] = f"({short})" if paren else short
+                st["desc"] = lay["desc"].replace("the comparison period", "a short tag (vs PM, vs PQ, vs PY)")
+                st["source"] = lay["source"].replace("vs Aug 2025", "vs PM")
+            out.append(st)
+    return out
+
+
+STYLES += _period_variants()
 
 TOKEN = re.compile(r"\{\{(.+?)\}\}|\[\[ICON\|(.+?)\|(.+?)\]\]")
 STRVARS = {"$v": "_ve", "$l": "_le", "$c": "_c", "$bg": "_bg", "$tc": "_tc"}
@@ -268,6 +322,9 @@ def labels_for(style):
         lab = ""
     if isinstance(lab, str):
         return {"up": lab, "down": lab, "flat": lab, "blank": lab}
+    if "dax" in lab:  # label computed in DAX; preview shows a sample, hidden when blank
+        p = lab["preview"]
+        return {"up": p, "down": p, "flat": p, "blank": ""}
     return lab
 
 
@@ -402,7 +459,11 @@ def dax_measure(style):
         )
     else:
         icon_block = 'VAR _Icon = ""\n'
-    if len(set(lab.values())) == 1:
+    raw = style.get("label")
+    if isinstance(raw, dict) and "dax" in raw:
+        label_block = (f"VAR _Label = {raw['dax']}\n"
+                       "    -- [MoM Prior Label] / [QoQ Prior Label] / [YoY Prior Label]: see period-measures.md\n")
+    elif len(set(lab.values())) == 1:
         label_block = f'VAR _Label = "{lab["up"]}"            -- "" hides the label\n'
     else:
         label_block = (
@@ -428,11 +489,11 @@ def dax_measure(style):
 VAR _Pct = [Sales MoM %]                     -- ratio, BLANK when not comparable
 VAR _HigherIsBetter = TRUE ()               -- FALSE () for costs, days, defects
 VAR _Decimals = 1
-{label_block}VAR _Num = "0" & IF ( _Decimals > 0, "." & REPT ( "0", _Decimals ) ) & "%"
+VAR _Num = "0" & IF ( _Decimals > 0, "." & REPT ( "0", _Decimals ) ) & "%"
 VAR _R = ROUND ( _Pct, _Decimals + 2 )
 VAR _Dir = IF ( ISBLANK ( _Pct ), 2, SIGN ( _R ) )   -- 1 up, -1 down, 0 flat, 2 blank
 VAR _Good = IF ( _HigherIsBetter, _Dir, - _Dir )
-VAR _c =
+{label_block}VAR _c =
     SWITCH ( TRUE (), _Dir = 2, "{dax_hex(BLANK[0])}", _Good = 1, "{dax_hex(GOOD[0])}", _Good = -1, "{dax_hex(BAD[0])}", "{dax_hex(FLAT[0])}" )
 VAR _bg =
     SWITCH ( TRUE (), _Dir = 2, "{dax_hex(BLANK[1])}", _Good = 1, "{dax_hex(GOOD[1])}", _Good = -1, "{dax_hex(BAD[1])}", "{dax_hex(FLAT[1])}" )
@@ -472,9 +533,14 @@ def catalog_md():
         "flat (0.0%) and blank (`--`, when no period is selected or the prior period has no data).",
         "Colours flip for metrics where lower is better (`_HigherIsBetter = FALSE ()`).",
         "",
-        "Labels are generic (`vs last month`, `MoM`) and never name a month or year. Set",
-        "`_Label` to `\"\"` to hide it, or to `QoQ` / `vs last quarter` / `YoY` / `vs last year`",
-        "for the other periods.",
+        "Labels come in three kinds:",
+        "",
+        "- **Generic** (`vs last month`, `MoM`): most styles. Set `_Label` to `\"\"` to hide it, or to",
+        "  `QoQ` / `vs last quarter` / `YoY` / `vs last year` for the other periods.",
+        "- **Prior period named** (`*-period` styles): `vs Aug 2025`, computed from the selected",
+        "  period by `[MoM Prior Label]`, `[QoQ Prior Label]` or `[YoY Prior Label]`",
+        "  ([period-measures.md](period-measures.md)). Never typed in by hand.",
+        "- **Short tag** (`*-short` styles): `vs PM`, `vs PQ` or `vs PY`.",
         "",
         "| Style | Looks like | Notes | Measure |",
         "|---|---|---|---|",

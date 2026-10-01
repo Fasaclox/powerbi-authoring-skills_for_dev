@@ -12,6 +12,10 @@
 VAR _Pct = [Sales MoM %]                     -- ratio, BLANK when not comparable
 VAR _HigherIsBetter = TRUE ()               -- FALSE () for costs, days, defects
 VAR _Decimals = 1
+VAR _Num = "0" & IF ( _Decimals > 0, "." & REPT ( "0", _Decimals ) ) & "%"
+VAR _R = ROUND ( _Pct, _Decimals + 2 )
+VAR _Dir = IF ( ISBLANK ( _Pct ), 2, SIGN ( _R ) )   -- 1 up, -1 down, 0 flat, 2 blank
+VAR _Good = IF ( _HigherIsBetter, _Dir, - _Dir )
 VAR _Label =
     SWITCH (
         _Dir,
@@ -20,10 +24,6 @@ VAR _Label =
         0, "No change",
         ""
     )
-VAR _Num = "0" & IF ( _Decimals > 0, "." & REPT ( "0", _Decimals ) ) & "%"
-VAR _R = ROUND ( _Pct, _Decimals + 2 )
-VAR _Dir = IF ( ISBLANK ( _Pct ), 2, SIGN ( _R ) )   -- 1 up, -1 down, 0 flat, 2 blank
-VAR _Good = IF ( _HigherIsBetter, _Dir, - _Dir )
 VAR _c =
     SWITCH ( TRUE (), _Dir = 2, "%2394A3B8", _Good = 1, "%2315803D", _Good = -1, "%23DC2626", "%2364748B" )
 VAR _bg =

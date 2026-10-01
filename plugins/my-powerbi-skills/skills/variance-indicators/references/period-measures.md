@@ -94,20 +94,46 @@ Notes:
 - For "lower is better" metrics (cost, days, defects) keep the maths as is and
   set `_HigherIsBetter = FALSE ()` in the style measure; only the colours flip.
 
-## Optional: dynamic comparison label
+## Prior-period label measures
 
-Labels default to generic text (`vs last month`, `MoM`) and never hard-code a
-month or year. Only if the user asks to name the prior period, compute it:
+The `*-period` styles name the period being compared against ("vs Aug 2025").
+The text always comes from the selected period, never typed in, and is blank
+under rule 1, so the indicator collapses to `--`. Other styles use generic
+labels (`vs last month`) or short tags (`vs PM`, `vs PQ`, `vs PY`).
 
 ```dax
-Sales MoM Label =
+MoM Prior Label =
 IF (
-    NOT ISBLANK ( [Sales MoM %] ),
-    "vs " & FORMAT ( EOMONTH ( MAX ( 'Date'[Date] ), -1 ), "mmm yyyy" )
+    HASONEVALUE ( 'Date'[Year Month] ),
+    FORMAT ( EOMONTH ( MAX ( 'Date'[Date] ), -1 ), "mmm yyyy" )        -- Aug 2025
 )
 ```
 
-and use it as `VAR _Label = [Sales MoM Label]` in the style measure.
+```dax
+QoQ Prior Label =
+IF (
+    HASONEVALUE ( 'Date'[Year Quarter] ),
+    VAR _d = EOMONTH ( MAX ( 'Date'[Date] ), -3 )
+    RETURN "Q" & QUARTER ( _d ) & " " & YEAR ( _d )                     -- Q2 2025
+)
+```
+
+```dax
+YoY Prior Label =
+IF (
+    HASONEVALUE ( 'Date'[Year] ),
+    IF (
+        HASONEVALUE ( 'Date'[Year Month] ),
+        FORMAT ( EOMONTH ( MAX ( 'Date'[Date] ), -12 ), "mmm yyyy" ),  -- Sep 2024
+        FORMAT ( MAX ( 'Date'[Year] ) - 1, "0" )                        -- 2024
+    )
+)
+```
+
+In a `*-period` style measure, `_Label` already reads
+`IF ( NOT ISBLANK ( _Pct ), "vs " & [MoM Prior Label] )`; swap in the QoQ or
+YoY label measure for those periods. FORMAT uses the model's culture, so month
+names follow the report language.
 
 ## Test matrix
 

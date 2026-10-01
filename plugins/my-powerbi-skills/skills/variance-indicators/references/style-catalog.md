@@ -8,9 +8,14 @@ Pick a style by name. Each preview shows the four states: up (+8.2%), down (-4.6
 flat (0.0%) and blank (`--`, when no period is selected or the prior period has no data).
 Colours flip for metrics where lower is better (`_HigherIsBetter = FALSE ()`).
 
-Labels are generic (`vs last month`, `MoM`) and never name a month or year. Set
-`_Label` to `""` to hide it, or to `QoQ` / `vs last quarter` / `YoY` / `vs last year`
-for the other periods.
+Labels come in three kinds:
+
+- **Generic** (`vs last month`, `MoM`): most styles. Set `_Label` to `""` to hide it, or to
+  `QoQ` / `vs last quarter` / `YoY` / `vs last year` for the other periods.
+- **Prior period named** (`*-period` styles): `vs Aug 2025`, computed from the selected
+  period by `[MoM Prior Label]`, `[QoQ Prior Label]` or `[YoY Prior Label]`
+  ([period-measures.md](period-measures.md)). Never typed in by hand.
+- **Short tag** (`*-short` styles): `vs PM`, `vs PQ` or `vs PY`.
 
 | Style | Looks like | Notes | Measure |
 |---|---|---|---|
@@ -33,3 +38,9 @@ for the other periods.
 | **`stack`**<br>Vertical stack | ![stack](../assets/previews/stack.svg) | Big arrow on top, percentage under it, tag at the bottom. Made for narrow tiles.<br><sub>From: Style sheet #16</sub> | [stack.dax](styles/stack.dax) |
 | **`chevron`**<br>Chevron | ![chevron](../assets/previews/chevron.svg) | Thick chevron and the percentage; flat shows a right chevron.<br><sub>From: Style sheet #17</sub> | [chevron.dax](styles/chevron.dax) |
 | **`descriptive`**<br>Descriptive text | ![descriptive](../assets/previews/descriptive.svg) | Triangle, percentage and a plain-language sentence that changes with direction.<br><sub>From: Style sheet #18</sub> | [descriptive.dax](styles/descriptive.dax) |
+| **`arrow-period`**<br>Arrow, prior period named | ![arrow-period](../assets/previews/arrow-period.svg) | Block arrow, bold percentage and the actual prior period (vs Aug 2025) in dark grey.<br><sub>From: Example: ⬆ +8.2%  vs Aug 2025</sub> | [arrow-period.dax](styles/arrow-period.dax) |
+| **`arrow-short`**<br>Arrow, short tag | ![arrow-short](../assets/previews/arrow-short.svg) | Block arrow, bold percentage and a short tag (vs PM, vs PQ, vs PY) in dark grey.<br><sub>From: Example: ⬆ +8.2%  vs PM</sub> | [arrow-short.dax](styles/arrow-short.dax) |
+| **`pill-period`**<br>Pill, prior period named | ![pill-period](../assets/previews/pill-period.svg) | Soft pill with triangle, bold percentage and the actual prior period (vs Aug 2025).<br><sub>From: Example: pill ▲ +8.2% vs Aug 2025</sub> | [pill-period.dax](styles/pill-period.dax) |
+| **`pill-short`**<br>Pill, short tag | ![pill-short](../assets/previews/pill-short.svg) | Soft pill with triangle, bold percentage and a short tag (vs PM, vs PQ, vs PY).<br><sub>From: Example: pill ▲ +8.2% vs PM</sub> | [pill-short.dax](styles/pill-short.dax) |
+| **`paren-period`**<br>Brackets, prior period named | ![paren-period](../assets/previews/paren-period.svg) | Triangle, bold percentage and the actual prior period (vs Aug 2025) in brackets.<br><sub>From: Example: ▲ +8.2% (vs Aug 2025)</sub> | [paren-period.dax](styles/paren-period.dax) |
+| **`paren-short`**<br>Brackets, short tag | ![paren-short](../assets/previews/paren-short.svg) | Triangle, bold percentage and a short tag (vs PM, vs PQ, vs PY) in brackets.<br><sub>From: Example: ▲ +8.2% (vs PM)</sub> | [paren-short.dax](styles/paren-short.dax) |
