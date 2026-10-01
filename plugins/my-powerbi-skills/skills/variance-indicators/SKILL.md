@@ -32,10 +32,13 @@ Details and the test matrix: [references/period-measures.md](references/period-m
 2. **Write the numeric measures** `<Base> MoM %`, `<Base> QoQ %`, `<Base> YoY %`
    from [period-measures.md](references/period-measures.md), with both blank rules.
    Only the periods the user asked for.
-3. **Pick the style.** Use the name the user gave. If they gave none, show the
-   catalog ([references/style-catalog.md](references/style-catalog.md) or
-   `assets/gallery.png`) and ask them to pick by name; suggest `pill` for cards
-   and `arrow-simple` for tables.
+3. **Pick the style and show it.** Use the name the user gave; if they gave
+   none, use the default, **`trend-pill`**. Before writing any measure, show
+   the user the style's preview image, `assets/previews/<style>.png` (up, down,
+   flat and `--`), and say which style it is, so they see it before it is
+   used. To choose a different one, point them to the catalog
+   ([references/style-catalog.md](references/style-catalog.md)) or
+   `assets/gallery.png`.
 4. **Write the style measure** by copying `references/styles/<style>.dax`:
    - point `_Pct` at the variance measure from step 2;
    - set `_Label` for the period (`vs last quarter`, `QoQ`, `vs last year`, `YoY`),
@@ -66,13 +69,15 @@ report or a DAX query.
 ## Adding or changing a style
 Styles are generated. Edit `STYLES` in `scripts/build_styles.py`, run
 `python3 scripts/build_styles.py`, and commit the regenerated `.dax`, previews
-and catalog. Re-render `assets/gallery.png` from `assets/gallery.html` with any
-headless browser.
+and catalog, then run `node scripts/render_previews.js` (Playwright) to refresh
+the per-style PNGs and `assets/gallery.png`.
 
 ## References
 - [references/period-measures.md](references/period-measures.md): MoM/QoQ/YoY DAX, blank rules, model requirements, test matrix
 - [references/style-catalog.md](references/style-catalog.md): all 31 styles with previews
 - [references/styles/](references/styles/): one ready-to-paste SVG measure per style
 - [references/native-text.md](references/native-text.md): text + colour measures for places that can't show an image
+- `assets/previews/<style>.png` (and `.svg`): one preview image per style
 - `assets/gallery.png`, `assets/gallery.html`: every style on one page
 - `scripts/build_styles.py`: the single source for styles, measures and previews
+- `scripts/render_previews.js`: renders the PNG previews and gallery

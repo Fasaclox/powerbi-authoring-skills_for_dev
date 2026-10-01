@@ -5,7 +5,8 @@ Every style is an SVG template defined once in STYLES below. This script turns
 each template into:
 
   references/styles/<name>.dax       a ready-to-paste Power BI SVG measure
-  assets/previews/<name>.svg         a preview (up, down, flat, blank states)
+  assets/previews/<name>.svg         a preview (up, down, flat, blank states);
+                                     scripts/render_previews.js turns these into .png
   references/style-catalog.md        the pick-by-name gallery page
   assets/gallery.html                all previews on one page (for the PNG)
 
@@ -151,7 +152,7 @@ STYLES = [
         + text("{{13+_iw+_ig}}", 17.5, 13, 700, "{{$c}}", "{{$v}}"),
     ),
     dict(
-        name="trend-pill", title="Trend pill",
+        name="trend-pill", title="Trend pill", default=True,
         desc="Percentage then a trend-line icon, inside a soft rounded box.",
         source="Examples: 12.20% ↗, 38.64% ↗, 32.73% ↘",
         icon="trend", isz=14, ig=5, vfs=13, label=None, h=26,
@@ -377,6 +378,7 @@ def _period_variants():
 
 
 STYLES += _period_variants()
+DEFAULT = next(s["name"] for s in STYLES if s.get("default"))
 
 TOKEN = re.compile(r"\{\{(.+?)\}\}|\[\[ICON\|(.+?)\|(.+?)\]\]")
 STRVARS = {"$v": "_ve", "$l": "_le", "$c": "_c", "$bg": "_bg", "$tc": "_tc", "$ic": "_ic",
@@ -634,6 +636,8 @@ def catalog_md():
         "",
         "![All styles](../assets/gallery.png)",
         "",
+        f"Default style: **`{DEFAULT}`**, used when no style is named.",
+        "",
         "Pick a style by name. Each preview shows the four states: up (+8.2%), down (-4.6%),",
         "flat (0.0%) and blank (`--`, when no period is selected or the prior period has no data).",
         "Colours flip for metrics where lower is better (`_HigherIsBetter = FALSE ()`).",
@@ -651,8 +655,9 @@ def catalog_md():
         "|---|---|---|---|",
     ]
     for s in STYLES:
+        tag = " (default)" if s.get("default") else ""
         out.append(
-            f"| **`{s['name']}`**<br>{s['title']} | ![{s['name']}](../assets/previews/{s['name']}.svg) "
+            f"| **`{s['name']}`**{tag}<br>{s['title']} | ![{s['name']}](../assets/previews/{s['name']}.png) "
             f"| {s['desc']}<br><sub>From: {s['source']}</sub> | [{s['name']}.dax](styles/{s['name']}.dax) |"
         )
     out.append("")
@@ -663,7 +668,8 @@ def gallery_html():
     cards = []
     for s in STYLES:
         svg = (SKILL / "assets" / "previews" / f"{s['name']}.svg").read_text()
-        cards.append(f"<div class='card'><div class='name'>{s['name']}</div>"
+        tag = " <span class='def'>default</span>" if s.get("default") else ""
+        cards.append(f"<div class='card'><div class='name'>{s['name']}{tag}</div>"
                      f"<div class='title'>{html.escape(s['title'])}</div>{svg}</div>")
     return f"""<!doctype html>
 <html><head><meta charset="utf-8"><title>Variance indicator styles</title>
@@ -674,6 +680,7 @@ p {{ color: #64748B; font-size: 13px; margin: 0 0 20px; }}
 .grid {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px; }}
 .card {{ background: #fff; border: 1px solid #E2E8F0; border-radius: 10px; padding: 12px 12px 4px; }}
 .name {{ font: 600 14px ui-monospace, 'DejaVu Sans Mono', monospace; color: #0F172A; }}
+.def {{ font: 600 10px 'Segoe UI', Arial, sans-serif; color: #15803D; background: #DCFCE7; padding: 1px 6px; border-radius: 8px; vertical-align: 2px; }}
 .title {{ font-size: 12px; color: #64748B; margin-bottom: 4px; }}
 .card > svg {{ max-width: 100%; height: auto; }}
 </style></head><body>
