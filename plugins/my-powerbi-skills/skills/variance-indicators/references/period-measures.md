@@ -94,6 +94,45 @@ Notes:
 - For "lower is better" metrics (cost, days, defects) keep the maths as is and
   set `_HigherIsBetter = FALSE ()` in the style measure; only the colours flip.
 
+## Absolute change (for `delta-both`)
+
+Same rules, returns the difference instead of the ratio:
+
+```dax
+Sales MoM Change =
+IF (
+    HASONEVALUE ( 'Date'[Year Month] ),
+    VAR _Current = [Sales]
+    VAR _Prior =
+        CALCULATE ( [Sales], DATEADD ( 'Date'[Date], -1, MONTH ) )
+    RETURN
+        IF ( NOT ISBLANK ( _Current ) && NOT ISBLANK ( _Prior ), _Current - _Prior )
+)
+```
+
+The style formats it with `_DeltaFmt` (thousands with a K by default); set it
+to the metric's own units, e.g. `"+$#,0;-$#,0;0"` or `"+0 days;-0 days;0 days"`.
+
+## Rates: percentage points instead of percent
+
+For a metric that is already a rate (margin %, conversion %, on-time %), the
+percent change of a percent is misleading; show the difference in points:
+
+```dax
+Margin MoM pp =
+IF (
+    HASONEVALUE ( 'Date'[Year Month] ),
+    VAR _Current = [Margin %]
+    VAR _Prior =
+        CALCULATE ( [Margin %], DATEADD ( 'Date'[Date], -1, MONTH ) )
+    RETURN
+        IF ( NOT ISBLANK ( _Current ) && NOT ISBLANK ( _Prior ), _Current - _Prior )
+)
+```
+
+Point any style's `_Pct` at it and set `_Unit = "pp"`: 0.021 then shows as
+`+2.1 pp`.
+
 ## Prior-period label measures
 
 The `*-period` styles name the period being compared against ("vs Aug 2025").

@@ -1,6 +1,6 @@
 ---
 name: variance-indicators
-description: "Builds MoM, QoQ and YoY variance indicators for Power BI cards and tables: DAX % measures that show -- when no period is selected or the prior period has no data, plus 25 named arrow/pill/badge styles as SVG image measures. Use for month over month, quarter over quarter, year over year, variance arrow, KPI trend badge, % change pill. For the base model use semantic-model-authoring; for placing visuals use powerbi-report-cli."
+description: "Builds MoM, QoQ and YoY variance indicators for Power BI cards and tables: DAX % measures that show -- when no period is selected or the prior period has no data, plus 31 named arrow/pill/badge styles as SVG image measures. Use for month over month, quarter over quarter, year over year, variance arrow, KPI trend badge, % change pill. For the base model use semantic-model-authoring; for placing visuals use powerbi-report-cli."
 ---
 
 # Variance indicators
@@ -44,6 +44,9 @@ Details and the test matrix: [references/period-measures.md](references/period-m
      prior-label measure; add that measure from period-measures.md first.
      The `*-short` styles use `vs PM` / `vs PQ` / `vs PY`;
    - set `_HigherIsBetter = FALSE ()` for cost-type metrics;
+   - for a rate metric (margin %, conversion %) use the points-difference
+     measure and set `_Unit = "pp"`; `delta-both` also needs the absolute
+     change measure (both in period-measures.md);
    - name it `<Base> <Period> <style>` and set **Data category = Image URL**
      (TMDL: `dataCategory: ImageUrl`).
 5. **Place it** (with `powerbi-report-cli` when editing PBIR): a table/matrix
@@ -68,7 +71,7 @@ headless browser.
 
 ## References
 - [references/period-measures.md](references/period-measures.md): MoM/QoQ/YoY DAX, blank rules, model requirements, test matrix
-- [references/style-catalog.md](references/style-catalog.md): all 25 styles with previews
+- [references/style-catalog.md](references/style-catalog.md): all 31 styles with previews
 - [references/styles/](references/styles/): one ready-to-paste SVG measure per style
 - [references/native-text.md](references/native-text.md): text + colour measures for places that can't show an image
 - `assets/gallery.png`, `assets/gallery.html`: every style on one page

@@ -12,7 +12,8 @@
 VAR _Pct = [Sales MoM %]                     -- ratio, BLANK when not comparable
 VAR _HigherIsBetter = TRUE ()               -- FALSE () for costs, days, defects
 VAR _Decimals = 1
-VAR _Num = "0" & IF ( _Decimals > 0, "." & REPT ( "0", _Decimals ) ) & "%"
+VAR _Unit = "%"                              -- "pp" when _Pct is a difference of two rates
+VAR _Num = "0" & IF ( _Decimals > 0, "." & REPT ( "0", _Decimals ) )
 VAR _R = ROUND ( _Pct, _Decimals + 2 )
 VAR _Dir = IF ( ISBLANK ( _Pct ), 2, SIGN ( _R ) )   -- 1 up, -1 down, 0 flat, 2 blank
 VAR _Good = IF ( _HigherIsBetter, _Dir, - _Dir )
@@ -22,7 +23,14 @@ VAR _c =
 VAR _bg =
     SWITCH ( TRUE (), _Dir = 2, "%23F1F5F9", _Good = 1, "%23DCFCE7", _Good = -1, "%23FEE2E2", "%23F1F5F9" )
 VAR _tc = "%2364748B"
-VAR _v = IF ( _Dir = 2, "--", FORMAT ( _R, "+" & _Num & ";-" & _Num & ";" & _Num ) )
+VAR _ic = _c
+VAR _v =
+    SWITCH (
+        TRUE (),
+        _Dir = 2, "--",
+        _Unit = "pp", FORMAT ( _R * 100, "+" & _Num & ";-" & _Num & ";" & _Num ) & " pp",
+        FORMAT ( _R, "+" & _Num & "%;-" & _Num & "%;" & _Num & "%" )
+    )
 VAR _ve = SUBSTITUTE ( SUBSTITUTE ( SUBSTITUTE ( SUBSTITUTE ( _v, "&", "&amp;" ), "<", "&lt;" ), "%", "%25" ), "#", "%23" )
 VAR _le = SUBSTITUTE ( SUBSTITUTE ( SUBSTITUTE ( SUBSTITUTE ( _Label, "&", "&amp;" ), "<", "&lt;" ), "%", "%25" ), "#", "%23" )
 VAR _HasIcon = NOT ISBLANK ( _Pct )
@@ -36,13 +44,13 @@ VAR _Icon =
     SWITCH (
         _Dir,
         1, "<path d='M8 1L15 8H10.5V15H5.5V8H1Z' fill='"
-           & _c
+           & _ic
            & "'/>",
         -1, "<g transform='translate(0,16) scale(1,-1)'><path d='M8 1L15 8H10.5V15H5.5V8H1Z' fill='"
-            & _c
+            & _ic
             & "'/></g>",
         0, "<path d='M3 8H13' fill='none' stroke='"
-           & _c
+           & _ic
            & "' stroke-linecap='round' stroke-linejoin='round' stroke-width='2.5'/>",
         ""
     )

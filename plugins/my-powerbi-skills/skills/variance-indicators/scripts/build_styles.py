@@ -20,6 +20,11 @@ Template syntax
   {{$v}} {{$l}}    value text / label text (escaped)
   {{$c}} {{$bg}}   status colour / soft background colour
   {{$tc}}          neutral label colour
+  {{$ic}}          icon colour (status colour unless the style sets icolor)
+  {{$d}}           absolute change text, e.g. +12.4K (styles that set delta)
+  {{$vp}}          the percentage in brackets, empty when blank
+                   more vars: _dw / _vpw widths of $d / $vp; _bw bar length and
+                   _bx bar offset (negative bars grow left) for bar styles
   [[ICON|x|y]]     the direction icon placed at x, y (numeric expressions)
 
 Run:  python3 scripts/build_styles.py   (from the skill folder or anywhere)
@@ -49,14 +54,14 @@ LABEL_EM = 0.55
 # ---------------------------------------------------------------- icons
 # Each icon is drawn pointing up in a 16x16 box; "down" is the same icon
 # flipped vertically. "flat" is drawn separately.
-_STROKE = "fill='none' stroke='{{$c}}' stroke-linecap='round' stroke-linejoin='round'"
+_STROKE = "fill='none' stroke='{{$ic}}' stroke-linecap='round' stroke-linejoin='round'"
 DASH = "<path d='M3 8H13' " + _STROKE + " stroke-width='2.5'/>"
 ICONS = {
-    "block": ("<path d='M8 1L15 8H10.5V15H5.5V8H1Z' fill='{{$c}}'/>", DASH),
+    "block": ("<path d='M8 1L15 8H10.5V15H5.5V8H1Z' fill='{{$ic}}'/>", DASH),
     "thin": ("<path d='M8 14V2M3 7L8 2L13 7' " + _STROKE + " stroke-width='2'/>", DASH),
     "diag": ("<path d='M4 12L12 4M6 4H12V10' " + _STROKE + " stroke-width='2'/>", DASH),
     "trend": ("<path d='M1 12L6 7L9 10L15 4M11 4H15V8' " + _STROKE + " stroke-width='1.8'/>", DASH),
-    "triangle": ("<path d='M8 3L14.5 13H1.5Z' fill='{{$c}}'/>", DASH),
+    "triangle": ("<path d='M8 3L14.5 13H1.5Z' fill='{{$ic}}'/>", DASH),
     "chevron": (
         "<path d='M2.5 11L8 5.5L13.5 11' " + _STROKE + " stroke-width='2.8'/>",
         "<path d='M5.5 2.5L11 8L5.5 13.5' " + _STROKE + " stroke-width='2.8'/>",
@@ -256,6 +261,67 @@ STYLES = [
         body="[[ICON|0|4.5]]" + text("{{_iw+_ig}}", 17.5, 14, 700, "{{$c}}", "{{$v}}")
         + text("{{_iw+_ig+_vw+_lg}}", 17, 12, 400, "#374151", "{{$l}}"),
     ),
+    # ---- Extra variants -------------------------------------------------
+    dict(
+        name="pill-solid", title="Solid pill",
+        desc="Solid status-colour pill with white arrow and text. Highest contrast; good on busy cards.",
+        source="Library addition",
+        icon="block", icolor="#FFFFFF", isz=12, ig=5, vfs=13, label=None, h=24,
+        w="10+_iw+_ig+_vw+10",
+        body="<rect width='{{_W}}' height='24' rx='12' fill='{{$c}}'/>[[ICON|10|6]]"
+        + text("{{10+_iw+_ig}}", 16.5, 13, 600, "#FFFFFF", "{{$v}}"),
+    ),
+    dict(
+        name="dot", title="Status dot",
+        desc="Coloured dot, dark percentage and a grey label. Lets the number stay neutral.",
+        source="Library addition",
+        icon="none", isz=0, ig=0, vfs=14, label="vs last month", lfs=12, lg=8, h=24,
+        w="16+_vw+_lg+_lw",
+        body="<circle cx='5' cy='12' r='4.5' fill='{{$c}}'/>"
+        + text(16, 17, 14, 600, "#0F172A", "{{$v}}")
+        + text("{{16+_vw+_lg}}", 17, 12, 400, "{{$tc}}", "{{$l}}"),
+    ),
+    dict(
+        name="accent-bar", title="Accent bar",
+        desc="Thin vertical status bar on the left, coloured percentage and a label.",
+        source="Library addition",
+        icon="none", isz=0, ig=0, vfs=15, label="vs last month", lfs=12, lg=8, h=24,
+        w="12+_vw+_lg+_lw",
+        body="<rect y='2' width='4' height='20' rx='2' fill='{{$c}}'/>"
+        + text(12, 17.5, 15, 700, "{{$c}}", "{{$v}}")
+        + text("{{12+_vw+_lg}}", 17, 12, 400, "{{$tc}}", "{{$l}}"),
+    ),
+    dict(
+        name="bar-diverging", title="Diverging mini bar",
+        desc="Tiny bar that grows right for gains and left for losses (full length at +/-20%, set _Cap), then the percentage. Shows size at a glance in a table.",
+        source="Library addition",
+        icon="none", isz=0, ig=0, vfs=13, label=None, h=24, bar=True,
+        w="68+_vw",
+        body="<rect y='9' width='60' height='6' rx='3' fill='#E2E8F0'/>"
+        "<rect x='{{30+_bx}}' y='9' width='{{_bw}}' height='6' fill='{{$c}}'/>"
+        "<rect x='29.5' y='5' width='1' height='14' fill='#94A3B8'/>"
+        + text(68, 16.5, 13, 600, "{{$c}}", "{{$v}}"),
+    ),
+    dict(
+        name="delta-both", title="Change and percentage",
+        desc="Triangle, the absolute change (+12.4K) and the percentage in brackets. Needs the change measure from period-measures.md.",
+        source="Library addition",
+        icon="triangle", isz=13, ig=7, vfs=15, lfs=13, label=None, h=24, delta=True,
+        w="_iw+_ig+_dw+6+_vpw",
+        body="[[ICON|0|5]]" + text("{{_iw+_ig}}", 17.5, 15, 700, "{{$c}}", "{{$d}}")
+        + text("{{_iw+_ig+_dw+6}}", 17, 13, 400, "{{$tc}}", "{{$vp}}"),
+    ),
+    dict(
+        name="word-prefix", title="Word prefix",
+        desc="Up / Down / No change spelled out before the percentage, so the meaning does not rely on colour.",
+        source="Library addition (accessibility)",
+        icon="none", isz=0, ig=0, vfs=14, lfs=13, lg=11, h=24,
+        label={"up": "Up", "down": "Down", "flat": "No change", "blank": ""},
+        w="_lw+_lg+_vw",
+        body=text(0, 17, 13, 600, "{{$c}}", "{{$l}}")
+        + text("{{_lw+_lg}}", 17, 14, 600, "{{$c}}", "{{$v}}"),
+    ),
+
     # ---- Comparison-label variants: the same three layouts with the actual
     # prior period ("vs Aug 2025", from a label measure) or a short tag (PM/PY).
 ]
@@ -313,7 +379,10 @@ def _period_variants():
 STYLES += _period_variants()
 
 TOKEN = re.compile(r"\{\{(.+?)\}\}|\[\[ICON\|(.+?)\|(.+?)\]\]")
-STRVARS = {"$v": "_ve", "$l": "_le", "$c": "_c", "$bg": "_bg", "$tc": "_tc"}
+STRVARS = {"$v": "_ve", "$l": "_le", "$c": "_c", "$bg": "_bg", "$tc": "_tc", "$ic": "_ic",
+           "$d": "_de", "$vp": "_vpe"}
+DELTA_BASE = 151000  # preview only: the base value the sample changes apply to
+BAR_CAP, BAR_HALF = 0.2, 30
 
 
 def labels_for(style):
@@ -362,7 +431,18 @@ def render(style, pct):
     up, flat = icon_variants(style)
     icon = {"up": up, "down": down_of(up) if up else "", "flat": flat, "blank": ""}[d]
     has_icon = bool(icon)
+    if blank:
+        dtxt = "--"
+    else:
+        k = round(r * DELTA_BASE / 100) / 10
+        dtxt = "0" if k == 0 else f"{'+' if k > 0 else '-'}{abs(k):.1f}K"
+    vp = "" if blank else f"({v})"
+    bw = 0 if blank else min(abs(r) / BAR_CAP, 1) * BAR_HALF
     ctx = {
+        "_dw": len(dtxt) * style["vfs"] * VALUE_EM,
+        "_vpw": len(vp) * style.get("lfs", 12) * VALUE_EM,
+        "_bw": bw,
+        "_bx": -bw if d == "down" else 0,
         "_vw": len(v) * style["vfs"] * VALUE_EM,
         "_lw": len(lab) * style.get("lfs", 12) * LABEL_EM,
         "_iw": style["isz"] if has_icon else 0,
@@ -371,7 +451,8 @@ def render(style, pct):
         "MAX": max,
     }
     ctx["_W"] = px(eval(style["w"], {}, ctx))
-    strs = {"$v": html.escape(v), "$l": html.escape(lab), "$c": c, "$bg": bg, "$tc": LABEL}
+    strs = {"$v": html.escape(v), "$l": html.escape(lab), "$c": c, "$bg": bg, "$tc": LABEL,
+            "$ic": style.get("icolor", c), "$d": dtxt, "$vp": html.escape(vp)}
 
     def sub(tpl):
         def rep(m):
@@ -475,6 +556,22 @@ def dax_measure(style):
     lem = round(style.get("lfs", 12) * LABEL_EM, 2)
     has_icon = "NOT ISBLANK ( _Pct )" if up else "FALSE ()"
     body = dax_expr(style["body"], "    ", style["isz"])
+    enc = 'SUBSTITUTE ( SUBSTITUTE ( SUBSTITUTE ( SUBSTITUTE ( {x}, "&", "&amp;" ), "<", "&lt;" ), "%", "%25" ), "#", "%23" )'
+    extra_inputs, extra_vars = "", ""
+    if style.get("delta"):
+        extra_inputs += ('VAR _Delta = [Sales MoM Change]                -- absolute change, see period-measures.md\n'
+                         'VAR _DeltaFmt = "+#,0.0,\\K;-#,0.0,\\K;0"      -- thousands; use your own units\n')
+        extra_vars += ('VAR _d = IF ( _Dir = 2 || ISBLANK ( _Delta ), "--", FORMAT ( _Delta, _DeltaFmt ) )\n'
+                       'VAR _vp = IF ( _Dir = 2, "", "(" & _v & ")" )\n'
+                       f'VAR _de = {enc.format(x="_d")}\n'
+                       f'VAR _vpe = {enc.format(x="_vp")}\n'
+                       f'VAR _dw = LEN ( _d ) * {round(style["vfs"] * VALUE_EM, 2):g}\n'
+                       f'VAR _vpw = LEN ( _vp ) * {round(style.get("lfs", 12) * VALUE_EM, 2):g}\n')
+    if style.get("bar"):
+        extra_inputs += f"VAR _Cap = {BAR_CAP:g}                              -- change that fills one side of the bar\n"
+        extra_vars += (f"VAR _bw = IF ( _Dir = 2, 0, MIN ( ABS ( _R ) / _Cap, 1 ) * {BAR_HALF} )\n"
+                       "VAR _bx = IF ( _Dir = -1, - _bw, 0 )\n")
+    icolor = f'"{dax_hex(style["icolor"])}"' if style.get("icolor") else "_c"
     return f"""// Style: {style['name']}  ({style['title']})
 // {style['desc']}
 // Generated by scripts/build_styles.py from the variance-indicators skill. Do not edit
@@ -489,7 +586,8 @@ def dax_measure(style):
 VAR _Pct = [Sales MoM %]                     -- ratio, BLANK when not comparable
 VAR _HigherIsBetter = TRUE ()               -- FALSE () for costs, days, defects
 VAR _Decimals = 1
-VAR _Num = "0" & IF ( _Decimals > 0, "." & REPT ( "0", _Decimals ) ) & "%"
+VAR _Unit = "%"                              -- "pp" when _Pct is a difference of two rates
+{extra_inputs}VAR _Num = "0" & IF ( _Decimals > 0, "." & REPT ( "0", _Decimals ) )
 VAR _R = ROUND ( _Pct, _Decimals + 2 )
 VAR _Dir = IF ( ISBLANK ( _Pct ), 2, SIGN ( _R ) )   -- 1 up, -1 down, 0 flat, 2 blank
 VAR _Good = IF ( _HigherIsBetter, _Dir, - _Dir )
@@ -498,7 +596,14 @@ VAR _Good = IF ( _HigherIsBetter, _Dir, - _Dir )
 VAR _bg =
     SWITCH ( TRUE (), _Dir = 2, "{dax_hex(BLANK[1])}", _Good = 1, "{dax_hex(GOOD[1])}", _Good = -1, "{dax_hex(BAD[1])}", "{dax_hex(FLAT[1])}" )
 VAR _tc = "{dax_hex(LABEL)}"
-VAR _v = IF ( _Dir = 2, "--", FORMAT ( _R, "+" & _Num & ";-" & _Num & ";" & _Num ) )
+VAR _ic = {icolor}
+VAR _v =
+    SWITCH (
+        TRUE (),
+        _Dir = 2, "--",
+        _Unit = "pp", FORMAT ( _R * 100, "+" & _Num & ";-" & _Num & ";" & _Num ) & " pp",
+        FORMAT ( _R, "+" & _Num & "%;-" & _Num & "%;" & _Num & "%" )
+    )
 VAR _ve = SUBSTITUTE ( SUBSTITUTE ( SUBSTITUTE ( SUBSTITUTE ( _v, "&", "&amp;" ), "<", "&lt;" ), "%", "%25" ), "#", "%23" )
 VAR _le = SUBSTITUTE ( SUBSTITUTE ( SUBSTITUTE ( SUBSTITUTE ( _Label, "&", "&amp;" ), "<", "&lt;" ), "%", "%25" ), "#", "%23" )
 VAR _HasIcon = {has_icon}
@@ -507,7 +612,7 @@ VAR _lw = LEN ( _Label ) * {lem:g}
 VAR _iw = IF ( _HasIcon, {style['isz']}, 0 )
 VAR _ig = IF ( _HasIcon, {style['ig']}, 0 )
 VAR _lg = IF ( _Label <> "", {style.get('lg', 0)}, 0 )
-VAR _W = ROUND ( {style['w']}, 0 )
+{extra_vars}VAR _W = ROUND ( {style['w']}, 0 )
 {icon_block}VAR _Body =
     {body}
 RETURN
