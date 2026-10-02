@@ -36,6 +36,12 @@ commit are recorded in [`upstream/UPSTREAM.md`](upstream/UPSTREAM.md). See
 
 Keeping it untouched means updates are a clean replace instead of a merge.
 
+## My skills
+
+| Skill | What it does |
+|---|---|
+| [`variance-indicators`](plugins/my-powerbi-skills/skills/variance-indicators/SKILL.md) | MoM / QoQ / YoY % measures that show `--` when no period is selected or the prior period has no data, plus 31 named arrow, pill, badge and mini-bar styles, including ones that name the prior period (vs Aug 2025) or use PM/PY tags ([gallery](plugins/my-powerbi-skills/skills/variance-indicators/references/style-catalog.md)) |
+
 ## Install
 
 **Claude Code**
