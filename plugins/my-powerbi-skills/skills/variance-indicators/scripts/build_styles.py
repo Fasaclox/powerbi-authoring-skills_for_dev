@@ -542,6 +542,16 @@ def dax_measure(style):
         )
     else:
         icon_block = 'VAR _Icon = ""\n'
+    label_block = dax_label_block(style)
+    vem = round(style["vfs"] * VALUE_EM, 2)
+    lem = round(style.get("lfs", 12) * LABEL_EM, 2)
+    has_icon = "NOT ISBLANK ( _Pct )" if up else "FALSE ()"
+    body = dax_expr(style["body"], "    ", style["isz"])
+    return _svg_measure(style, label_block, vem, lem, has_icon, body, icon_block)
+
+
+def dax_label_block(style):
+    lab = labels_for(style)
     raw = style.get("label")
     if isinstance(raw, dict) and "dax" in raw:
         label_block = (f"VAR _Label = {raw['dax']}\n"
@@ -554,10 +564,10 @@ def dax_measure(style):
             f'        1, "{lab["up"]}",\n        -1, "{lab["down"]}",\n'
             f'        0, "{lab["flat"]}",\n        "{lab["blank"]}"\n    )\n'
         )
-    vem = round(style["vfs"] * VALUE_EM, 2)
-    lem = round(style.get("lfs", 12) * LABEL_EM, 2)
-    has_icon = "NOT ISBLANK ( _Pct )" if up else "FALSE ()"
-    body = dax_expr(style["body"], "    ", style["isz"])
+    return label_block
+
+
+def _svg_measure(style, label_block, vem, lem, has_icon, body, icon_block):
     enc = 'SUBSTITUTE ( SUBSTITUTE ( SUBSTITUTE ( SUBSTITUTE ( {x}, "&", "&amp;" ), "<", "&lt;" ), "%", "%25" ), "#", "%23" )'
     extra_inputs, extra_vars = "", ""
     if style.get("delta"):
@@ -651,14 +661,20 @@ def catalog_md():
         "  ([period-measures.md](period-measures.md)). Never typed in by hand.",
         "- **Short tag** (`*-short` styles): `vs PM`, `vs PQ` or `vs PY`.",
         "",
-        "| Style | Looks like | Notes | Measure |",
-        "|---|---|---|---|",
+        "Every style also has a **text variant** for places that only show text, such as a",
+        "card's reference label: a text measure plus colour measures. See",
+        "[text-variants.md](text-variants.md).",
+        "",
+        "| Style | SVG measure (tables, image slots) | Text variant (reference labels) | Notes | Measures |",
+        "|---|---|---|---|---|",
     ]
     for s in STYLES:
         tag = " (default)" if s.get("default") else ""
         out.append(
             f"| **`{s['name']}`**{tag}<br>{s['title']} | ![{s['name']}](../assets/previews/{s['name']}.png) "
-            f"| {s['desc']}<br><sub>From: {s['source']}</sub> | [{s['name']}.dax](styles/{s['name']}.dax) |"
+            f"| ![{s['name']} text](../assets/text-previews/{s['name']}.png) "
+            f"| {s['desc']}<br><sub>From: {s['source']}</sub> "
+            f"| [SVG](styles/{s['name']}.dax)<br>[Text](text/{s['name']}.dax) |"
         )
     out.append("")
     return "\n".join(out)
@@ -692,10 +708,182 @@ p {{ color: #64748B; font-size: 13px; margin: 0 0 20px; }}
 """
 
 
+# ---------------------------------------------------------------- text variants
+# A card's reference label (and callouts, subtitles, tooltips) only renders
+# text, so every style also gets a text twin: the same pieces in the same order,
+# with Unicode glyphs for the icon, plus colour measures for conditional
+# formatting. U+FE0E asks for the plain text glyph, not a colour emoji, which
+# would ignore the font colour.
+VS15 = "︎"
+GLYPHS = {  # icon -> (up, down, flat)
+    "block": ("⬆" + VS15, "⬇" + VS15, "–"),
+    "circle": ("⬆" + VS15, "⬇" + VS15, "–"),
+    "thin": ("↑", "↓", "–"),
+    "diag": ("↗" + VS15, "↘" + VS15, "–"),
+    "trend": ("↗" + VS15, "↘" + VS15, "–"),
+    "triangle": ("▲", "▼", "–"),
+    "chevron": ("∧", "∨", "›"),
+    "none": ("", "", ""),
+}
+# Pieces per style, in display order: i icon, v value, l label, pv value in
+# brackets, d absolute change, vp change % in brackets, bar text bar, or a
+# literal glyph. Styles not listed use "i v l".
+TEXT_PARTS = {
+    "arrow-suffix": "v i", "trend-pill": "v i", "chip-label": "v i l",
+    "label-chip": "l v i", "brackets": "i pv", "prefix": "l i v",
+    "text-only": "v l", "word-prefix": "l v", "dot": "● v l",
+    "accent-bar": "▌ v l", "bar-diverging": "bar v", "delta-both": "i d vp",
+}
+BAR_CELLS = 5
+SOLID_TEXT = "#FFFFFF"
+
+
+def text_parts(style):
+    return TEXT_PARTS.get(style["name"], "i v l").split()
+
+
+def has_bg(style):
+    """Styles drawn on a filled shape also get a background colour measure."""
+    return style.get("icolor") is not None or "fill='{{$bg}}'" in style["body"].split("[[ICON")[0]
+
+
+def _state(pct):
+    blank = pct is None
+    r = None if blank else round(pct * 1000) / 1000
+    d = "blank" if blank else ("up" if r > 0 else "down" if r < 0 else "flat")
+    return blank, r, d
+
+
+def text_string(style, pct):
+    """Python twin of the DAX text measure, for previews."""
+    blank, r, d = _state(pct)
+    g = GLYPHS[style["icon"]]
+    icon = {"up": g[0], "down": g[1], "flat": g[2], "blank": ""}[d]
+    v = fmt_pct(pct)
+    lab = labels_for(style)[d]
+    if blank:
+        dtxt, vp, pv = "--", "", "--"
+    else:
+        k = round(r * DELTA_BASE / 100) / 10
+        dtxt = "0" if k == 0 else f"{'+' if k > 0 else '-'}{abs(k):.1f}K"
+        vp = pv = f"({v})"
+    n = 0 if blank else int(math.floor(min(abs(r) / BAR_CAP, 1) * BAR_CELLS + 0.5))
+    bar = "▰" * n + "▱" * (BAR_CELLS - n)
+    pieces = {"i": icon, "v": v, "l": lab, "pv": pv, "d": dtxt, "vp": vp, "bar": bar}
+    return " ".join(x for x in (pieces.get(t, t) for t in text_parts(style)) if x)
+
+
+def dax_text_measures(style):
+    g = GLYPHS[style["icon"]]
+    parts = text_parts(style)
+    dax_piece = {"i": "_Icon", "v": "_v", "l": "_Label", "pv": "_pv", "d": "_d", "vp": "_vp", "bar": "_Bar"}
+    concat = ' & " " & '.join(dax_piece.get(t, f'"{t}"') for t in parts)
+    extra_in, extra = "", ""
+    if "d" in parts:
+        extra_in += ('VAR _Delta = [Sales MoM Change]                -- absolute change, see period-measures.md\n'
+                     'VAR _DeltaFmt = "+#,0.0,\\K;-#,0.0,\\K;0"      -- thousands; use your own units\n')
+        extra += ('VAR _d = IF ( _Dir = 2 || ISBLANK ( _Delta ), "--", FORMAT ( _Delta, _DeltaFmt ) )\n'
+                  'VAR _vp = IF ( _Dir = 2, "", "(" & _v & ")" )\n')
+    if "pv" in parts:
+        extra += 'VAR _pv = IF ( _Dir = 2, "--", "(" & _v & ")" )\n'
+    if "bar" in parts:
+        extra_in += f"VAR _Cap = {BAR_CAP:g}                              -- change that fills the bar\n"
+        extra += (f"VAR _Cells = IF ( _Dir = 2, 0, ROUND ( MIN ( ABS ( _R ) / _Cap, 1 ) * {BAR_CELLS}, 0 ) )\n"
+                  f'VAR _Bar = REPT ( "▰", _Cells ) & REPT ( "▱", {BAR_CELLS} - _Cells )\n')
+    icon = (f'VAR _Icon = SWITCH ( _Dir, 1, "{g[0]}", -1, "{g[1]}", 0, "{g[2]}", "" )\n'
+            if g[0] else "")
+    solid = style.get("icolor") is not None
+    bg = has_bg(style)
+    common = ("VAR _Pct = [Sales MoM %]                     -- ratio, BLANK when not comparable\n"
+              "VAR _HigherIsBetter = TRUE ()               -- FALSE () for costs, days, defects")
+    dir_lines = ("VAR _R = ROUND ( _Pct, 3 )\n"
+                 "VAR _Dir = IF ( ISBLANK ( _Pct ), 2, SIGN ( _R ) )   -- 1 up, -1 down, 0 flat, 2 blank\n"
+                 "VAR _Good = IF ( _HigherIsBetter, _Dir, - _Dir )")
+
+    def colour(i):
+        return (f'    SWITCH ( TRUE (), _Dir = 2, "{BLANK[i]}", _Good = 1, "{GOOD[i]}", '
+                f'_Good = -1, "{BAD[i]}", "{FLAT[i]}" )')
+
+    text_colour = f'    "{SOLID_TEXT}"                      -- white text on the solid background' if solid else colour(0)
+    n = style["name"]
+    out = (f"// Text variant of style: {n}  ({style['title']})\n"
+           "// For places that only show text: a card's reference label, callout value,\n"
+           "// subtitle or tooltip. Generated by scripts/build_styles.py; set-up steps are in\n"
+           "// references/text-variants.md.\n//\n"
+           f"// Looks like:  {text_string(style, 0.082)}   |   {text_string(style, -0.046)}   |   "
+           f"{text_string(style, None)}\n//\n"
+           f"// [Sales MoM {n} Text]  -> the reference label's Value\n"
+           f"// [Sales MoM {n} Color] -> Value font colour: fx > Format style: Field value\n")
+    if bg:
+        out += (f"// [Sales MoM {n} Bg]    -> background colour fx (reference label or card), standing in\n"
+                f"//                         for the {'solid' if solid else 'soft'} shape the SVG style draws\n")
+    out += f"""
+[Sales MoM {n} Text] =
+{common}
+VAR _Decimals = 1
+VAR _Unit = "%"                              -- "pp" when _Pct is a difference of two rates
+{extra_in}VAR _Num = "0" & IF ( _Decimals > 0, "." & REPT ( "0", _Decimals ) )
+VAR _R = ROUND ( _Pct, _Decimals + 2 )
+VAR _Dir = IF ( ISBLANK ( _Pct ), 2, SIGN ( _R ) )   -- 1 up, -1 down, 0 flat, 2 blank
+{dax_label_block(style)}VAR _v =
+    SWITCH (
+        TRUE (),
+        _Dir = 2, "--",
+        _Unit = "pp", FORMAT ( _R * 100, "+" & _Num & ";-" & _Num & ";" & _Num ) & " pp",
+        FORMAT ( _R, "+" & _Num & "%;-" & _Num & "%;" & _Num & "%" )
+    )
+{icon}{extra}RETURN
+    TRIM ( {concat} )
+
+[Sales MoM {n} Color] =
+{common}
+{dir_lines}
+RETURN
+{text_colour}
+"""
+    if bg:
+        out += f"""
+[Sales MoM {n} Bg] =
+{common}
+{dir_lines}
+RETURN
+{colour(0) if solid else colour(1)}
+"""
+    return out
+
+
+def text_preview_svg(style):
+    states = [0.082, -0.046, 0.0, None]
+    names = ["up", "down", "flat", "blank"]
+    solid = style.get("icolor") is not None
+    bg = has_bg(style)
+    rows, maxw = [], 0
+    for i, (p, n) in enumerate(zip(states, names)):
+        _, _, dkey = _state(p)
+        c, soft = {"up": GOOD, "down": BAD, "flat": FLAT, "blank": BLANK}[dkey]
+        t = text_string(style, p)
+        w = px(len(t) * 14 * 0.6) + (20 if bg else 0)
+        maxw = max(maxw, w)
+        y = 12 + i * 36
+        x, shape = 64, ""
+        if bg:
+            shape = f"<rect x='{x}' y='{y}' width='{w}' height='26' rx='6' fill='{c if solid else soft}'/>"
+            x += 10
+        fill = SOLID_TEXT if solid else c
+        rows.append(f"<text x='12' y='{y + 17}' {FONT} font-size='10' fill='#94A3B8'>{n}</text>{shape}"
+                    f"<text x='{x}' y='{y + 18}' {FONT} font-size='14' font-weight='600' fill='{fill}'>"
+                    f"{html.escape(t)}</text>")
+    W, H = 64 + maxw + 20, 12 + 4 * 36
+    return (f"<svg xmlns='http://www.w3.org/2000/svg' width='{W}' height='{H}' viewBox='0 0 {W} {H}'>"
+            f"<rect width='{W}' height='{H}' rx='8' fill='#FFFFFF'/>" + "".join(rows) + "</svg>\n")
+
+
 def main():
     for s in STYLES:
         (SKILL / "assets" / "previews" / f"{s['name']}.svg").write_text(preview_svg(s))
         (SKILL / "references" / "styles" / f"{s['name']}.dax").write_text(dax_measure(s))
+        (SKILL / "assets" / "text-previews" / f"{s['name']}.svg").write_text(text_preview_svg(s))
+        (SKILL / "references" / "text" / f"{s['name']}.dax").write_text(dax_text_measures(s))
     (SKILL / "references" / "style-catalog.md").write_text(catalog_md())
     (SKILL / "assets" / "gallery.html").write_text(gallery_html())
     print(f"built {len(STYLES)} styles")
