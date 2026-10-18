@@ -1,6 +1,6 @@
 ---
 name: variance-indicators
-description: "Builds MoM, QoQ and YoY variance indicators for Power BI cards and tables: DAX % measures that show -- when no period is selected or the prior period has no data, plus 31 named arrow/pill/badge styles as SVG image measures. Use for month over month, quarter over quarter, year over year, variance arrow, KPI trend badge, % change pill. For the base model use semantic-model-authoring; for placing visuals use powerbi-report-cli."
+description: "Builds MoM, QoQ and YoY variance indicators for Power BI cards and tables: DAX % measures that show -- when no period is selected or the prior period has no data, plus 31 named styles as SVG image measures and as text for card reference labels. Use for month over month, quarter over quarter, year over year, variance arrow, KPI trend badge, % change pill. For the base model use semantic-model-authoring; for placing visuals use powerbi-report-cli."
 ---
 
 # Variance indicators
@@ -54,9 +54,12 @@ Details and the test matrix: [references/period-measures.md](references/period-m
      (TMDL: `dataCategory: ImageUrl`).
 5. **Place it** (with `powerbi-report-cli` when editing PBIR): a table/matrix
    column (set image height to the style's height), the Image visual bound to
-   the measure, or a card's image slot. Where an image can't go (card callout,
-   subtitle, tooltip), use the text + colour measures in
-   [references/native-text.md](references/native-text.md).
+   the measure, or a card's image slot. Where only text can go (a card's
+   **reference label**, callout, subtitle, tooltip), use the style's text
+   variant from `references/text/<style>.dax`: the `Text` measure as the value,
+   the `Color` measure as font colour fx, and `Bg` (shape styles) as background
+   fx. Show its preview, `assets/text-previews/<style>.png`, first. Set-up:
+   [references/text-variants.md](references/text-variants.md).
 6. **Verify** with the test matrix in period-measures.md: no selection, first
    period, a period with no prior data, growth, decline, zero change.
 
@@ -76,7 +79,9 @@ the per-style PNGs and `assets/gallery.png`.
 - [references/period-measures.md](references/period-measures.md): MoM/QoQ/YoY DAX, blank rules, model requirements, test matrix
 - [references/style-catalog.md](references/style-catalog.md): all 31 styles with previews
 - [references/styles/](references/styles/): one ready-to-paste SVG measure per style
-- [references/native-text.md](references/native-text.md): text + colour measures for places that can't show an image
+- [references/text/](references/text/): the text + colour variant of each style, for card reference labels
+- [references/text-variants.md](references/text-variants.md): how the text variants map to the styles and how to bind them
+- `assets/text-previews/<style>.png` (and `.svg`): preview of each text variant
 - `assets/previews/<style>.png` (and `.svg`): one preview image per style
 - `assets/gallery.png`, `assets/gallery.html`: every style on one page
 - `scripts/build_styles.py`: the single source for styles, measures and previews
