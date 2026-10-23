@@ -65,22 +65,97 @@ scripts need Node.js or an image-generation API key (see each `SKILL.md`).
 
 ## Install
 
-**Claude Code**
+### 1. Get access to the repo
+
+The marketplace is this GitHub repo, so Claude Code has to be able to clone it.
+
+- **Public repo**: anyone can install, nothing else to do.
+- **Private repo**: the repo owner adds you as a collaborator (GitHub → Settings →
+  Collaborators → Add people). Accept the invite, and make sure the git on your machine
+  is signed in to that GitHub account (`gh auth login`, or Git Credential Manager on
+  Windows) so the clone doesn't fail with "repository not found".
+
+### 2. Install the plugins (Claude Code)
+
+Run these in Claude Code:
 
 ```
-/plugin marketplace add <owner>/<this-repo>
+/plugin marketplace add Fasaclox/powerbi-authoring-skills_for_dev
 /plugin install powerbi-authoring@powerbi-skills-lab
 /plugin install my-powerbi-skills@powerbi-skills-lab
 /plugin install ui-ux-pro-max@powerbi-skills-lab      # optional design skills
 ```
 
-**Other agents**: point your tool at `upstream/powerbi-authoring/skills/*` and
+The marketplace is called `powerbi-skills-lab` (from `.claude-plugin/marketplace.json`), so
+plugin names always end in `@powerbi-skills-lab`. Restart Claude Code afterwards, then run
+`/plugin` to check all three are installed and enabled.
+
+**`powerbi-authoring` is required.** `my-powerbi-skills` builds on Microsoft's
+`powerbi-report-cli` and `semantic-model-authoring` skills and hands work off to them. Install it
+from this marketplace (pinned copy, see [`upstream/UPSTREAM.md`](upstream/UPSTREAM.md)) as above,
+or from Microsoft's own marketplace if you want their latest release:
+
+```
+/plugin marketplace add microsoft/skills-for-fabric
+/plugin install powerbi-authoring@fabric-collection
+```
+
+Install it from one marketplace only; two copies give you duplicate skills and two
+`powerbi-modeling-mcp` servers.
+
+### 3. Prerequisites for the upstream skills
+
+Node.js (for `npx @microsoft/powerbi-modeling-mcp`),
+`npm install -g @microsoft/powerbi-report-authoring-cli`, Azure CLI (`az login`)
+for Fabric calls, and Power BI Desktop on Windows for local preview.
+
+### Other agents
+
+Point your tool at `upstream/powerbi-authoring/skills/*` and
 `plugins/my-powerbi-skills/skills/*` (and optionally `vendor/ui-ux-pro-max/.claude/skills/*`), and add the MCP server from
 `upstream/powerbi-authoring/.mcp.json` (or `upstream/mcp-config-template.json`).
 
-Prerequisites from upstream: Node.js (for `npx @microsoft/powerbi-modeling-mcp`),
-`npm install -g @microsoft/powerbi-report-authoring-cli`, Azure CLI (`az login`)
-for Fabric calls, and Power BI Desktop on Windows for local preview.
+### Troubleshooting (mostly Windows)
+
+**`marketplace add` times out while cloning.** The repo is large (it carries the upstream and
+vendored copies), so the clone can take longer than Claude Code's default git timeout. Raise it
+to 10 minutes, then start Claude Code again from the same terminal:
+
+```powershell
+# PowerShell, current session
+$env:CLAUDE_CODE_PLUGIN_GIT_TIMEOUT_MS = "600000"
+
+# PowerShell, permanent (open a new terminal afterwards)
+setx CLAUDE_CODE_PLUGIN_GIT_TIMEOUT_MS 600000
+```
+
+```bash
+# macOS / Linux
+export CLAUDE_CODE_PLUGIN_GIT_TIMEOUT_MS=600000
+```
+
+**`EBUSY` or `EPERM` errors (resource busy, operation not permitted).** Another process is holding
+the marketplace folder, usually a second Claude Code window or VS Code with the Claude extension.
+
+1. Close every other Claude Code session and VS Code window.
+2. Delete what the failed attempt left behind in `~/.claude/plugins/marketplaces`
+   (`%USERPROFILE%\.claude\plugins\marketplaces` on Windows): any folder ending in `...clone`
+   and any `powerbi-skills-lab` folder.
+
+   ```powershell
+   Get-ChildItem "$env:USERPROFILE\.claude\plugins\marketplaces" |
+     Where-Object { $_.Name -like '*clone*' -or $_.Name -eq 'powerbi-skills-lab' } |
+     Remove-Item -Recurse -Force
+   ```
+
+3. Run `/plugin marketplace add` again.
+
+**Clone hangs with no progress.** Your git may be trying SSH and waiting on a key or host
+prompt that never shows. Add the marketplace by its HTTPS URL instead:
+
+```
+/plugin marketplace add https://github.com/Fasaclox/powerbi-authoring-skills_for_dev.git
+```
 
 ## Adding a skill
 
