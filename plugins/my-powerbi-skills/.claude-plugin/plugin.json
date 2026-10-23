@@ -14,9 +14,15 @@
     "yoy",
     "qoq",
     "variance",
-    "svg"
+    "svg",
+    "design",
+    "tone",
+    "palette",
+    "fonts",
+    "theme"
   ],
   "skills": [
-    "./skills/variance-indicators"
+    "./skills/variance-indicators",
+    "./skills/report-design-direction"
   ]
 }

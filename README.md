@@ -41,6 +41,7 @@ Keeping it untouched means updates are a clean replace instead of a merge.
 | Skill | What it does |
 |---|---|
 | [`variance-indicators`](plugins/my-powerbi-skills/skills/variance-indicators/SKILL.md) | MoM / QoQ / YoY % measures that show `--` when no period is selected or the prior period has no data, plus 31 named arrow, pill, badge and mini-bar styles (SVG, plus a text version for card reference labels), including ones that name the prior period (vs Aug 2025) or use PM/PY tags ([gallery](plugins/my-powerbi-skills/skills/variance-indicators/references/style-catalog.md)) |
+| [`report-design-direction`](plugins/my-powerbi-skills/skills/report-design-direction/SKILL.md) | Design direction from the report's business domain (192 industry profiles from ui-ux-pro-max): upstream tone and archetype, density, dark or light, card style, a contrast-checked palette and Power BI-safe fonts, plus the `report-themes` command that builds the theme ([catalog](plugins/my-powerbi-skills/skills/report-design-direction/references/domain-catalog.md)) |
 
 ## Install
 
