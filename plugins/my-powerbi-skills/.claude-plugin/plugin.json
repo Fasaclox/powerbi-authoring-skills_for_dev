@@ -17,10 +17,13 @@
     "svg",
     "theme",
     "palette",
-    "design"
+    "design",
+    "tone",
+    "fonts"
   ],
   "skills": [
     "./skills/variance-indicators",
-    "./skills/report-themes"
+    "./skills/report-themes",
+    "./skills/report-design-direction"
   ]
 }
