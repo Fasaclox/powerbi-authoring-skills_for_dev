@@ -60,6 +60,7 @@ scripts need Node.js or an image-generation API key (see each `SKILL.md`).
 | Skill | What it does |
 |---|---|
 | [`variance-indicators`](plugins/my-powerbi-skills/skills/variance-indicators/SKILL.md) | MoM / QoQ / YoY % measures that show `--` when no period is selected or the prior period has no data, plus 31 named arrow, pill, badge and mini-bar styles (SVG, plus a text version for card reference labels), including ones that name the prior period (vs Aug 2025) or use PM/PY tags ([gallery](plugins/my-powerbi-skills/skills/variance-indicators/references/style-catalog.md)) |
+| [`report-themes`](plugins/my-powerbi-skills/skills/report-themes/SKILL.md) | Power BI theme JSON from design tokens: palette, soft rounded / outlined / elevated / flat cards, fonts, canvas, tables, slicers and charts, with WCAG contrast checks and PBIR snippets for what themes can't set. 9 named presets with previews ([gallery](plugins/my-powerbi-skills/skills/report-themes/references/preset-catalog.md)), 192 product palettes from ui-ux-pro-max, or your own brand tokens |
 
 ## Install
 
