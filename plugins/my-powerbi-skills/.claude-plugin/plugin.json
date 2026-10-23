@@ -15,14 +15,15 @@
     "qoq",
     "variance",
     "svg",
+    "theme",
+    "palette",
     "design",
     "tone",
-    "palette",
-    "fonts",
-    "theme"
+    "fonts"
   ],
   "skills": [
     "./skills/variance-indicators",
+    "./skills/report-themes",
     "./skills/report-design-direction"
   ]
 }

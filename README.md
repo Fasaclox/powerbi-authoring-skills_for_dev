@@ -23,7 +23,13 @@ upstream skills kept as-is, plus my own skills that build on them.
 ├── plugins/my-powerbi-skills/        # my own skills live here
 │   ├── .claude-plugin/plugin.json
 │   └── skills/_template/             # copy this to start a new skill
-└── scripts/sync-upstream.sh          # pull a newer upstream release
+├── vendor/ui-ux-pro-max/             # DO NOT EDIT: verbatim copy of the UI/UX Pro Max plugin
+│   ├── .claude/skills/               # ui-ux-pro-max, design-system, ui-styling, design, brand, slides, banner-design
+│   ├── .claude-plugin/plugin.json
+│   ├── LICENSE                       # Next Level Builder's MIT license
+│   └── UPSTREAM.md                   # exact version + commit copied
+├── scripts/sync-upstream.sh          # pull a newer upstream release
+└── scripts/sync-ui-ux-pro-max.sh     # pull a newer UI/UX Pro Max release
 ```
 
 ## Provenance
@@ -34,13 +40,27 @@ in microsoft/skills-for-fabric (MIT, © Microsoft Corporation). The release and
 commit are recorded in [`upstream/UPSTREAM.md`](upstream/UPSTREAM.md). See
 [`NOTICE.md`](NOTICE.md).
 
-Keeping it untouched means updates are a clean replace instead of a merge.
+`vendor/ui-ux-pro-max/` is copied unchanged from
+[nextlevelbuilder/ui-ux-pro-max-skill](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill)
+(MIT, © Next Level Builder; `ui-styling` is Apache-2.0). Version and commit are in
+[`vendor/ui-ux-pro-max/UPSTREAM.md`](vendor/ui-ux-pro-max/UPSTREAM.md).
+
+Keeping both untouched means updates are a clean replace instead of a merge.
+
+## Third-party design skills
+
+The `ui-ux-pro-max` plugin adds general UI/UX design knowledge that is useful next to the
+Power BI skills: searchable styles, colour palettes, font pairings, chart-type guidance and UX
+rules (`ui-ux-pro-max`), design tokens (`design-system`), plus `ui-styling`, `design`, `brand`,
+`slides` and `banner-design`. Its search script needs Python 3; some `design` and `brand`
+scripts need Node.js or an image-generation API key (see each `SKILL.md`).
 
 ## My skills
 
 | Skill | What it does |
 |---|---|
 | [`variance-indicators`](plugins/my-powerbi-skills/skills/variance-indicators/SKILL.md) | MoM / QoQ / YoY % measures that show `--` when no period is selected or the prior period has no data, plus 31 named arrow, pill, badge and mini-bar styles (SVG, plus a text version for card reference labels), including ones that name the prior period (vs Aug 2025) or use PM/PY tags ([gallery](plugins/my-powerbi-skills/skills/variance-indicators/references/style-catalog.md)) |
+| [`report-themes`](plugins/my-powerbi-skills/skills/report-themes/SKILL.md) | Power BI theme JSON from design tokens: palette, soft rounded / outlined / elevated / flat cards, fonts, canvas, tables, slicers and charts, with WCAG contrast checks and PBIR snippets for what themes can't set. 9 named presets with previews ([gallery](plugins/my-powerbi-skills/skills/report-themes/references/preset-catalog.md)), 192 product palettes from ui-ux-pro-max, or your own brand tokens |
 | [`report-design-direction`](plugins/my-powerbi-skills/skills/report-design-direction/SKILL.md) | Design direction from the report's business domain (192 industry profiles from ui-ux-pro-max): upstream tone and archetype, density, dark or light, card style, a contrast-checked palette and Power BI-safe fonts, plus the `report-themes` command that builds the theme ([catalog](plugins/my-powerbi-skills/skills/report-design-direction/references/domain-catalog.md)) |
 
 ## Install
@@ -51,10 +71,11 @@ Keeping it untouched means updates are a clean replace instead of a merge.
 /plugin marketplace add <owner>/<this-repo>
 /plugin install powerbi-authoring@powerbi-skills-lab
 /plugin install my-powerbi-skills@powerbi-skills-lab
+/plugin install ui-ux-pro-max@powerbi-skills-lab      # optional design skills
 ```
 
 **Other agents**: point your tool at `upstream/powerbi-authoring/skills/*` and
-`plugins/my-powerbi-skills/skills/*`, and add the MCP server from
+`plugins/my-powerbi-skills/skills/*` (and optionally `vendor/ui-ux-pro-max/.claude/skills/*`), and add the MCP server from
 `upstream/powerbi-authoring/.mcp.json` (or `upstream/mcp-config-template.json`).
 
 Prerequisites from upstream: Node.js (for `npx @microsoft/powerbi-modeling-mcp`),
@@ -92,7 +113,16 @@ git diff --stat upstream/           # review, then commit
 
 Check upstream's CHANGELOG for renamed or merged skills, and whether any of your forks need the fix too.
 
+The UI/UX Pro Max copy updates the same way:
+
+```
+scripts/sync-ui-ux-pro-max.sh           # latest main
+scripts/sync-ui-ux-pro-max.sh v2.16.0   # a specific tag
+git diff --stat vendor/                 # review, then commit
+```
+
 ## License
 
 My own files: MIT (see [`LICENSE`](LICENSE)). Files under `upstream/`: MIT, © Microsoft Corporation
-(see [`upstream/LICENSE`](upstream/LICENSE)).
+(see [`upstream/LICENSE`](upstream/LICENSE)). Files under `vendor/ui-ux-pro-max/`: MIT, © Next Level Builder
+(see [`vendor/ui-ux-pro-max/LICENSE`](vendor/ui-ux-pro-max/LICENSE)), except `ui-styling` (Apache-2.0) and its fonts (OFL).

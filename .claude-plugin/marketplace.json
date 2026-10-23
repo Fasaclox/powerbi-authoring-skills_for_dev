@@ -17,6 +17,11 @@
       "name": "my-powerbi-skills",
       "source": "./plugins/my-powerbi-skills",
       "description": "My own Power BI skills that extend or improve on the upstream ones"
+    },
+    {
+      "name": "ui-ux-pro-max",
+      "source": "./vendor/ui-ux-pro-max",
+      "description": "Third-party: UI/UX Pro Max design skills (ui-ux-pro-max, design-system, ui-styling, design, brand, slides, banner-design) from nextlevelbuilder/ui-ux-pro-max-skill (MIT)"
     }
   ]
 }
